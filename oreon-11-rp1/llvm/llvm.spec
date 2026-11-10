@@ -58,7 +58,7 @@ BuildRequires: oreon-rpm-macros
 %bcond_with compat_build
 # Bundle compat libraries for a previous LLVM version, as part of llvm-libs and
 %bcond_with bundle_compat_lib
-%bcond_without check
+%bcond_with check
 
 %if %{with bundle_compat_lib}
 %global compat_maj_ver 22
@@ -205,17 +205,7 @@ end
 %endif
 
 #region pgo
-%ifarch %{ix86}
 %bcond_with pgo
-%else
-# Disable PGO on s390x temporarily in order to reduce LLVM build time and
-# disk usage.
-%ifarch s390x
-%bcond_with pgo
-%else
-%bcond_without pgo
-%endif
-%endif
 
 # Sanity checks for PGO and bootstrapping
 #----------------------------------------
@@ -243,11 +233,7 @@ end
 %{error:PGO requires --with=lld}
 %endif
 
-# For PGO Disable LTO for now because of LLVMgold.so not found error
-# Use LLVM_ENABLE_LTO:BOOL=ON flags to enable LTO instead
-%if 0%{without lto_build} || 0%{with pgo}
-%global _lto_cflags %nil
-%endif
+%global _lto_cflags %{nil}
 
 %if %{without compat_build}
 %bcond_without libclc
@@ -1441,6 +1427,9 @@ cd llvm/utils/lit
 %global optflags %(echo %{optflags} | sed 's/-g /-g1 /')
 %endif
 
+%global optflags %(echo %{optflags} | sed -E -e 's/(^| )-flto(=[^ ]*)?//g' -e 's/(^| )-ffat-lto-objects//g')
+%global build_ldflags %(echo %{build_ldflags} | sed -E -e 's/(^| )-flto(=[^ ]*)?//g' -e 's/(^| )-ffat-lto-objects//g')
+
 %global projects clang;clang-tools-extra;lld
 %global runtimes compiler-rt;openmp
 
@@ -1590,6 +1579,7 @@ popd
     -DBUILD_SHARED_LIBS=OFF \\\
     -DLLVM_BUILD_LLVM_DYLIB=ON \\\
     -DLLVM_LINK_LLVM_DYLIB=ON \\\
+    -DLLVM_DYLIB_COMPONENTS=all \\\
     -DCLANG_LINK_CLANG_DYLIB=ON \\\
     -DLLVM_ENABLE_FFI:BOOL=ON \\\
     -DLLVM_ENABLE_EH=OFF
@@ -1722,6 +1712,7 @@ popd
         -DMLIR_INCLUDE_TESTS:BOOL=ON \\\
         -DMLIR_INCLUDE_INTEGRATION_TESTS:BOOL=OFF \\\
         -DMLIR_INSTALL_AGGREGATE_OBJECTS=OFF \\\
+        -DMLIR_LINK_MLIR_DYLIB=ON \\\
         -DMLIR_BUILD_MLIR_C_DYLIB=ON \\\
         -DMLIR_ENABLE_BINDINGS_PYTHON:BOOL=%{mlir_jit} \\\
         -DMLIR_ENABLE_EXECUTION_ENGINE:BOOL=%{mlir_jit}
@@ -2008,7 +1999,6 @@ cd $OLD_CWD
 
 %if 0%{with lto_build}
   %global extra_cmake_opts %{extra_cmake_opts} -DLLVM_ENABLE_LTO:BOOL=Thin
-  %global extra_cmake_opts %{extra_cmake_opts} -DLLVM_ENABLE_FATLTO=ON
 %endif
 
 %if 0%{with use_lld}
