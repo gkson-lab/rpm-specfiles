@@ -1814,7 +1814,7 @@ popd
 
 #region test options
 %global cmake_config_args %{cmake_config_args} \\\
-	-DLLVM_BUILD_TESTS:BOOL=ON \\\
+	-DLLVM_BUILD_TESTS:BOOL=%{?with_check:ON}%{!?with_check:OFF} \\\
 	-DLLVM_INCLUDE_TESTS:BOOL=ON \\\
 	-DLLVM_INSTALL_GTEST:BOOL=ON \\\
 	-DLLVM_LIT_ARGS="-vv"
