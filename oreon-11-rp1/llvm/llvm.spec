@@ -3639,10 +3639,10 @@ fi
     libarcher.so
 }}
 %if %{with offload}
-%expand_libs libomptarget.so.%{so_suffix}
-%expand_libs libLLVMOffload.so.%{so_suffix}
+%expand_libs libomptarget.so*
+%expand_libs libLLVMOffload.so*
 %if %{maj_ver} >= 24
-%expand_libs libLLVMOffloadKernel.so.%{so_suffix}
+%expand_libs libLLVMOffloadKernel.so*
 %endif
 %endif
 
@@ -3655,15 +3655,8 @@ fi
 %{_prefix}/lib/clang/%{maj_ver}/include/ompt-multiplex.h
 %expand_libs cmake/openmp
 %if %{with offload}
-%{expand_libs %{expand:
-    libomptarget.so
-    libLLVMOffload.so
-}}
 %if %{maj_ver} >= 24
-%{expand_libs %{expand:
-    libLLVMOffloadKernel.so
-    LLVMOffloadKernelPerThreadDefaultStream.o
-}}
+%expand_libs LLVMOffloadKernelPerThreadDefaultStream.o
 %endif
 
 %{expand_libs %{expand:
