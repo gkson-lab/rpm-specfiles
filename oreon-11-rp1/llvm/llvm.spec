@@ -2342,9 +2342,8 @@ rm -rf %{buildroot}/%{install_datadir}/gdb
 # chmod +w %{buildroot}/%{_datarootdir}/gdb/python/ompd/ompdModule.so
 
 %if %{with offload}
-# Remove files that we don't package, yet.
-rm %{buildroot}%{install_bindir}/llvm-offload-device-info
-rm %{buildroot}%{install_bindir}/llvm-omp-kernel-replay
+rm -f %{buildroot}%{install_bindir}/llvm-offload-device-info
+rm -f %{buildroot}%{install_bindir}/llvm-omp-kernel-replay
 %endif
 
 #endregion OPENMP installation
