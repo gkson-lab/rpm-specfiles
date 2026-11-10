@@ -558,6 +558,7 @@ Patch2307:        227851.patch
 # ompd_get_curr_parallel_handle returns unavailable outside a team.
 # The test only accepted stale_handle.
 Patch2308:        ompd-curr-parallel-handle-check.patch
+Patch2309:        flang-rt-link-libm.patch
 
 
 %if %{with fastclang}
