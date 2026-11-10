@@ -1508,30 +1508,48 @@ cd llvm
 
 OREON_NINJA_FILTER="$RPM_BUILD_DIR/oreon-ninja-filter.awk"
 cat > "$OREON_NINJA_FILTER" <<'OREON_AWK'
+BEGIN { keep = 0; nbuf = 0 }
+function dumpbuf() {
+  print lastcmd
+  for (i = 0; i < nbuf; i++) print buf[i]
+  nbuf = 0
+}
 /^\[[0-9]+\/[0-9]+\]/ {
-  if (match($0, /^\[([0-9]+)\/([0-9]+)\]/, m)) {
-    if (m[1] % 50 == 0 || $0 ~ /FAILED:|fatal error:|^error: /) {
-      printf "[ninja %%s/%%s]\n", m[1], m[2]
-      fflush()
-    }
-    next
+  nbuf = 0
+  lastcmd = $0
+  if (match($0, /^\[([0-9]+)\/([0-9]+)\]/, m) && (m[1] % 50 == 0 || $0 ~ /FAILED:/)) {
+    if ($0 ~ /FAILED:/) print
+    else printf "[ninja %%s/%%s]\n", m[1], m[2]
+    fflush()
   }
+  next
 }
 /^-- Performing Test / { next }
 /^-- Check for working / { next }
 /^-- Looking for / { next }
 /^-- Detecting / { next }
-/FAILED:|fatal error:|^error: |ninja: build stopped|subcommand failed|^RPM build errors:|^ERROR:|Cannot stat|cpio: |CMake Error|Killed|No space left|Cannot allocate memory/ {
+/FAILED:|ninja: build stopped|subcommand failed|^RPM build errors:|^ERROR:|Cannot stat|cpio: |CMake Error|Killed|No space left|Cannot allocate memory/ {
+  dumpbuf()
   print
   fflush()
+  if ($0 ~ /FAILED:/) keep = 80
   next
 }
+keep > 0 { print; fflush(); keep--; next }
 /^\+ \/usr\/bin\/cmake --build/ || /^Run Build Command/ || /^-- .+ project is/ || /^-- Build files have been written/ {
   print
   fflush()
   next
 }
-{ next }
+{
+  buf[nbuf] = $0
+  nbuf++
+  if (nbuf > 80) {
+    for (i = 1; i < nbuf; i++) buf[i - 1] = buf[i]
+    nbuf--
+  }
+  next
+}
 OREON_AWK
 
 oreon_ninja_filter() {
