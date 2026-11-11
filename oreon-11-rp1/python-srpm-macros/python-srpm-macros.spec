@@ -6,7 +6,7 @@
 
 Name: python-srpm-macros
 Version: 3.15
-Release: 4%{?dist}
+Release: 5%{?dist}
 Summary: SRPM macros for Python packages
 License: MIT
 URL: https://www.python.org/
