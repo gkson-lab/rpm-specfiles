@@ -8,6 +8,8 @@
 %bcond bootstrap 0
 %oreon_bootstrap
 BuildRequires: oreon-rpm-macros
+%global toolchain clang
+%global _lto_cflags %{nil}
 %define py3_shebang_fix() find %{*} -type f -print0 | xargs -0 grep -I -l -E '^#![ ]*/.*python' | while read -r f; do sed -i '1s|^#![ ]*/.*python.*|#!%{__python3}|' "$f"; done || :
 %define cmake %{set_build_flags}; CFLAGS=$(echo "$CFLAGS" | sed -e 's/-Wno-complain-wrong-lang//g' -e 's/-specs=[^ ]*//g'); export CFLAGS; CXXFLAGS=$(echo "$CXXFLAGS" | sed -e 's/-Wno-complain-wrong-lang//g' -e 's/-specs=[^ ]*//g'); export CXXFLAGS; %__cmake %{!?__cmake_in_source_build:-S "%{_vpath_srcdir}"} %{!?__cmake_in_source_build:-B "%{__cmake_builddir}"} %{?_cmake_generator:-G %{_cmake_generator}} -DCMAKE_C_FLAGS_RELEASE:STRING="-DNDEBUG" -DCMAKE_CXX_FLAGS_RELEASE:STRING="-DNDEBUG" -DCMAKE_Fortran_FLAGS_RELEASE:STRING="-DNDEBUG" -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF -DCMAKE_INSTALL_DO_STRIP:BOOL=OFF -DCMAKE_INSTALL_PREFIX:PATH=%{_prefix} -DCMAKE_INSTALL_FULL_SBINDIR:PATH=%{_sbindir} -DCMAKE_INSTALL_SBINDIR:PATH=%(s=%{_sbindir}; echo ${s##*/}) -DINCLUDE_INSTALL_DIR:PATH=%{_includedir} -DLIB_INSTALL_DIR:PATH=%{_libdir} -DSYSCONF_INSTALL_DIR:PATH=%{_sysconfdir} -DSHARE_INSTALL_PREFIX:PATH=%{_datadir} %{?_cmake_lib_suffix64} %{?_cmake_shared_libs}
 %global optflags %{optflags} -gz=zstd
@@ -233,16 +235,11 @@ end
 %{error:PGO requires --with=lld}
 %endif
 
-%global _lto_cflags %{nil}
-
 %if %{without compat_build}
 %bcond_without libclc
 %else
 %bcond_with libclc
 %endif
-
-# We are building with clang for faster/lower memory LTO builds.
-%global toolchain clang
 
 # Make sure that we are not building with a newer compiler than the targeted
 # version. For example, if we build LLVM 19 with Clang 20, then we'd build
@@ -3639,10 +3636,10 @@ fi
     libarcher.so
 }}
 %if %{with offload}
-%expand_libs libomptarget.so*
-%expand_libs libLLVMOffload.so*
+%expand_libs libomptarget.so.*
+%expand_libs libLLVMOffload.so.*
 %if %{maj_ver} >= 24
-%expand_libs libLLVMOffloadKernel.so*
+%expand_libs libLLVMOffloadKernel.so.*
 %endif
 %endif
 
@@ -3655,6 +3652,8 @@ fi
 %{_prefix}/lib/clang/%{maj_ver}/include/ompt-multiplex.h
 %expand_libs cmake/openmp
 %if %{with offload}
+%expand_libs libomptarget.so
+%expand_libs libLLVMOffload.so
 %if %{maj_ver} >= 24
 %expand_libs LLVMOffloadKernelPerThreadDefaultStream.o
 %endif
