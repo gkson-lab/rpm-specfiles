@@ -35,7 +35,7 @@ BuildRequires: gcc-c++
 BuildRequires: glibc-devel
 BuildRequires: gmp-devel
 BuildRequires: mpfr-devel
-BuildRequires: mpc-devel
+BuildRequires: pkgconfig(mpc)
 BuildRequires: zlib-devel
 Requires: binutils
 Requires: cpp%{?_isa} = %{version}-%{release}
@@ -91,7 +91,7 @@ Summary: Files for building GCC plugins
 Requires: gcc%{?_isa} = %{version}-%{release}
 Requires: gmp-devel
 Requires: mpfr-devel
-Requires: mpc-devel
+Requires: pkgconfig(mpc)
 %description -n gcc-plugin-devel
 Header files for compiling GCC plugins.
 
