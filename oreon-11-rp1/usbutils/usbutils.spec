@@ -1,13 +1,13 @@
 # Copyright (C) 2026 Oreon HQ
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-%global source0_hash 659f40c440e31ba865c52c818a33d3ba6a97349e3353f8b1985179cb2aa71ec5
+%global source0_hash 20287d68fcd9ebb50a05ba0645a4af7583bd8dfc7307215ba121e4bc6d057aa1
 
 %{!?oreon_bootstrap:%global oreon_bootstrap %{nil}}
 %bcond bootstrap 0
 %oreon_bootstrap
 Name:    usbutils
-Version:        019
+Version:        020
 Release:        1%{?dist}
 Summary: Linux USB utilities
 URL:     http://www.linux-usb.org/

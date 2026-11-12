@@ -1,7 +1,7 @@
 # Copyright (C) 2026 Oreon HQ
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-%global source0_hash 3d3a1b973af218114f4f889bbaa2f4c037deaae0c8e815eec381c3d546b974a0
+%global source0_hash 0014c7886930454fe8bd4228665b51af55eeae560ea135c9c4cd33f55b2591d9
 %global source2_hash 7b44485541eefe7cecb8bcf30682904bb6c3d70aae21bbfffc5fca742cb6f56f
 
 %{!?oreon_bootstrap:%global oreon_bootstrap %{nil}}
@@ -12,7 +12,7 @@
 Summary:	LZMA compression utilities
 Name:		xz
 Epoch:		1
-Version:        5.8.3
+Version:        5.8.4
 Release:        1%{?dist}
 
 # liblzma - 0BSD

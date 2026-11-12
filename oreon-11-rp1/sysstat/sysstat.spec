@@ -1,14 +1,14 @@
 # Copyright (C) 2026 Oreon HQ
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-%global source0_hash e48fc69401135dc08d2cd4ff58dbdbfce9b7485f76fc9049d97848e313c08dda
+%global source0_hash 8aa2054c56c941ab30e1b14ad2e0076a7e6d6bf01f50e22d954885b8a7f9a679
 
 %{!?oreon_bootstrap:%global oreon_bootstrap %{nil}}
 %bcond bootstrap 0
 %oreon_bootstrap
 Summary: Collection of performance monitoring tools for Linux
 Name: sysstat
-Version:        12.7.9
+Version:        12.8.0
 Release:        1%{?dist}
 License: GPL-2.0-or-later
 
