@@ -48,6 +48,7 @@ BuildRequires: flex
 BuildRequires: file
 BuildRequires: python3
 BuildRequires: libxml2-devel
+BuildRequires: doxygen
 BuildRequires: gcc-gnat
 BuildRequires: libgnat
 BuildRequires: gcc-gdc
@@ -673,6 +674,10 @@ step host-make make -s -j"$jobs" LDFLAGS_FOR_TARGET="-Wl,-z,relro,-z,now"
 %endif
 rm -rf stage1-*
 step libstdcxx-docs make -s -C "$target/libstdc++-v3" doc-html-doxygen
+if ! find "$target/libstdc++-v3/doc/doxygen/html" -type f | grep -q .; then
+  echo "libstdc++ doxygen html is empty, is doxygen installed?"
+  exit 1
+fi
 
 mkdir -p %{_builddir}/gcc-jit
 cd %{_builddir}/gcc-jit
@@ -797,7 +802,7 @@ fi
 rm -rf %{_builddir}/gcc-jit
 target=$(%{_builddir}/gcc-%{version}/config.guess)
 doc=%{_builddir}/gcc-build/$target/libstdc++-v3/doc/doxygen/html
-if ! test -d "$doc"; then
+if ! find "$doc" -type f | grep -q .; then
   echo "missing libstdc++ docs $doc"
   exit 1
 fi
