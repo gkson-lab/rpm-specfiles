@@ -9,7 +9,7 @@
 
 Name: pam
 Version: 1.7.1
-Release: 3%{?dist}
+Release: 4%{?dist}
 Summary: Pluggable authentication modules
 License: BSD-3-Clause
 URL: https://github.com/linux-pam/linux-pam
@@ -32,6 +32,9 @@ BuildRequires: gettext-devel
 BuildRequires: gdbm-devel
 BuildRequires: pkgconf
 BuildRequires: patchelf
+
+Provides: pam-libs = %{version}-%{release}
+Provides: pam-libs%{?_isa} = %{version}-%{release}
 
 %description
 PAM is the pluggable authentication library.
