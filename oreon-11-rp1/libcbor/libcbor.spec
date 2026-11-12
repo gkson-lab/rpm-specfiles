@@ -48,7 +48,6 @@ Requires:	%{name}%{?_isa} = %{version}-%{release}
 cd doc
 make man
 
-
 %install
 %cmake_install
 mkdir -p %{buildroot}%{_mandir}/man3
