@@ -28,12 +28,12 @@ Source0:        https://files.pythonhosted.org/packages/source/f/flit_core/flit_
 
 BuildArch:      noarch
 BuildRequires:  python%{python3_pkgversion}-devel
+BuildRequires:  oreon-rpm-macros
 
 %if %{with tests}
 BuildRequires:  python%{python3_pkgversion}-pytest
 # Test deps that require flit-core to build:
 BuildRequires:  python%{python3_pkgversion}-testpath
-BuildRequires:  oreon-rpm-macros
 %endif
 
 %global _description %{expand:
