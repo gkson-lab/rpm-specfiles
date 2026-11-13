@@ -69,6 +69,7 @@ Requires: %{_bindir}/file
 Requires: %{_bindir}/grep
 Requires: %{_bindir}/sed
 Requires: %{_bindir}/xargs
+Requires: %{_bindir}/pkgconf
 Requires: (gcc-plugin-annobin if gcc)
 Requires: efi-srpm-macros
 Requires: cmake-srpm-macros
@@ -128,6 +129,11 @@ install -p -m 644 oreon-hardened-cc1 %{buildroot}%{_rpmconfigdir}/redhat/redhat-
 
 install -p -m 644 %{SOURCE35} .
 
+mkdir -p %{buildroot}%{_bindir}
+for t in x86_64-oreon-linux-gnu aarch64-oreon-linux-gnu; do
+  ln -s pkgconf %{buildroot}%{_bindir}/$t-pkg-config
+done
+
 %triggerin -- gcc-plugin-annobin gcc
 %{rrcdir}/oreon-annobin-plugin-select.sh
 %end
@@ -138,6 +144,8 @@ install -p -m 644 %{SOURCE35} .
 
 %files
 %doc buildflags.md
+%{_bindir}/x86_64-oreon-linux-gnu-pkg-config
+%{_bindir}/aarch64-oreon-linux-gnu-pkg-config
 %dir %{rrcdir}
 %{rrcdir}/brp-ldconfig
 %{rrcdir}/brp-mangle-shebangs
