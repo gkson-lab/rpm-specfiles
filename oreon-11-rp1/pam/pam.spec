@@ -22,15 +22,16 @@ BuildRequires: meson
 BuildRequires: ninja-build
 BuildRequires: flex
 BuildRequires: libxcrypt-devel
-BuildRequires: audit-libs-devel
-BuildRequires: libeconf-devel
-BuildRequires: libselinux-devel
-BuildRequires: libnsl2-devel
-BuildRequires: libtirpc-devel
-BuildRequires: systemd-devel
+BuildRequires: pkgconfig(audit)
+BuildRequires: pkgconfig(libcap-ng)
+BuildRequires: pkgconfig(libeconf)
+BuildRequires: pkgconfig(libselinux)
+BuildRequires: pkgconfig(libnsl)
+BuildRequires: pkgconfig(libtirpc)
+BuildRequires: pkgconfig(libsystemd)
 BuildRequires: gettext-devel
 BuildRequires: gdbm-devel
-BuildRequires: pkgconf
+BuildRequires: pkgconfig
 BuildRequires: patchelf
 
 Provides: pam-libs = %{version}-%{release}
