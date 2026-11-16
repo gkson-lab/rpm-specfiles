@@ -6,9 +6,6 @@
 %{!?oreon_bootstrap:%global oreon_bootstrap %{nil}}
 %bcond bootstrap 0
 %oreon_bootstrap
-# Set to bcond_without or use --with bootstrap,
-# when bootstrapping a new architecture.
-%bcond_with bootstrap
 
 Name:           ninja-build
 Version:        1.13.2
@@ -139,3 +136,6 @@ cp -a %{ninja_distinfo} %{buildroot}%{python3_sitelib}
 %endif
 
 
+
+%changelog
+%autochangelog

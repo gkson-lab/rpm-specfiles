@@ -1,13 +1,13 @@
 # Copyright (C) 2026 Oreon HQ
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-%global source0_hash 4d9c68d409facc8351f1d15d824ead687d59204319524f7647903738f940efe3
+%global source0_hash 9e146964f4d899932af6c6d75fa9b5a6b19c4f4c647f18a461bf346a5ddeb02e
 %global debug_package %{nil}
 %global rrcdir /usr/lib/rpm/oreon
 
 Name: oreon-rpm-config
 Version: 345
-Release: 14%{?dist}
+Release: 17%{?dist}
 Summary: Oreon rpm build configuration
 License: GPL-1.0-or-later AND GPL-2.0-or-later AND GPL-3.0-or-later WITH Autoconf-exception-generic
 URL: https://github.com/oreonhq/rpm-specfiles
@@ -52,18 +52,21 @@ Source36: macros.oreon-vendor-compat
 BuildArch: noarch
 Provides: system-rpm-config = %{version}-%{release}
 Obsoletes: rpmautospec-rpm-macros < 0.6.3-2
-# replaces the base buildroot rpm config, which ships the same macro files
 Provides: redhat-rpm-config = %{version}-%{release}
 Obsoletes: redhat-rpm-config < %{version}-%{release}
 
-BuildRequires: oreon-rpm-macros
+BuildRequires: oreon-rpm-macros >= 1-7
+BuildRequires: gcc(crt-triple)
 
+Requires: oreon-rpm-macros >= 1-7
+Requires: gcc(crt-triple)
 Requires: coreutils
 Requires: rpm >= 4.19.91
 Requires: dwz >= 0.4
 Requires: zip
 Requires: clang
 Requires: compiler-rt
+Requires: lld
 Requires: %{_bindir}/find
 Requires: %{_bindir}/file
 Requires: %{_bindir}/grep
@@ -195,3 +198,6 @@ done
 %{_rpmconfigdir}/redhat/redhat-hardened-clang.cfg
 %{_rpmconfigdir}/redhat/redhat-hardened-clang-ld.cfg
 %{_rpmconfigdir}/redhat/redhat-annobin-cc1
+
+%changelog
+%autochangelog

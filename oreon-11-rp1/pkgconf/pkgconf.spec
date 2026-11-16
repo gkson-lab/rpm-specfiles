@@ -1,15 +1,15 @@
 # Copyright (C) 2026 Oreon HQ
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-%global source0_hash 9371b2f6372da574d4c6dc96fe9b1463037bcf6afcb6671c1555afde7b17e2de
+%global source0_hash d0cd841bc8e55b9da888106c00dc256d05b7d1d8e5a46f4be4eb4c5125bd2dc4
 %{!?oreon_bootstrap:%global oreon_bootstrap %{nil}}
 %bcond bootstrap 0
 %oreon_bootstrap
 %global debug_package %{nil}
 
 Name: pkgconf
-Version: 3.0.10
-Release: 5%{?dist}
+Version: 3.0.11
+Release: 1%{?dist}
 Summary: compiler and linker flags for development libraries
 License: ISC
 URL: https://gitea.treehouse.systems/ariadne/pkgconf
@@ -110,3 +110,6 @@ rm -rf %{buildroot}%{_docdir}/pkgconf
 %{_includedir}/pkgconf/
 %{_libdir}/libpkgconf.so
 %{_libdir}/pkgconfig/libpkgconf.pc
+
+%changelog
+%autochangelog

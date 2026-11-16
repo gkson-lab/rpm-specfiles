@@ -91,7 +91,7 @@ License: Python-2.0.1
 # Only possible on certain architectures: https://peps.python.org/pep-0744/#support
 # The freethreading build (when enabled) does not support JIT yet:
 # https://github.com/python/cpython/issues/133171
-%bcond jit %[("%{_arch}" == "x86_64" || "%{_arch}" == "aarch64") && %{without bootstrap}]
+%bcond jit 0
 # Whether to build the JIT stencils (or else use the prebuilt ones)
 # On F43 it should be possible to build stencils, but the pregenerated stencils
 # for aarch64 debug build don't match the built ones
@@ -272,7 +272,10 @@ Obsoletes: python%{pybasever}%{?1:-%{1}}\
 # (keep this list alphabetized within the %%if blocks)
 
 BuildRequires: autoconf
+%bcond_with bluez
+%if %{with bluez}
 BuildRequires: bluez-libs-devel
+%endif
 BuildRequires: bzip2-devel
 BuildRequires: expat-devel >= 2.5.0-2
 BuildRequires: findutils
@@ -280,7 +283,9 @@ BuildRequires: gcc
 BuildRequires: gdbm-devel
 BuildRequires: git-core
 BuildRequires: glibc-devel
+%if %{without bootstrap}
 BuildRequires: libX11-devel
+%endif
 BuildRequires: libffi-devel
 BuildRequires: libuuid-devel
 BuildRequires: libzstd-devel
@@ -296,7 +301,10 @@ BuildRequires: oreon-rpm-macros
 BuildRequires: sqlite-devel
 BuildRequires: systemtap-sdt-devel
 BuildRequires: tcl-devel
+%bcond_with tk
+%if %{with tk}
 BuildRequires: tk-devel
+%endif
 BuildRequires: xz-devel
 BuildRequires: zlib-devel
 BuildRequires: /usr/bin/dtrace
@@ -318,13 +326,20 @@ BuildRequires: clang >= 19
 BuildRequires: llvm >= 19
 %endif
 
+%if %{without bootstrap}
 %ifarch %{valgrind_arches}
 BuildRequires: valgrind-devel
 %endif
+%endif
 
 %if %{with main_python}
+%bcond_with appstream_glib
+%if %{without bootstrap}
 BuildRequires: desktop-file-utils
+%if %{with appstream_glib}
 BuildRequires: libappstream-glib
+%endif
+%endif
 %endif
 
 %if %{with rpmwheels}
@@ -376,10 +391,8 @@ Source11: idle3.appdata.xml
 #  1. scratch build Python on platform with required LLVM version (usually rawhide)
 #  2. download the files from Koji:
 #    $ bash download-jit-stencils-from-koji.sh KOJI_TASK_URL|KOJI_TASK_ID
-#  3. add the files to lookaside cache with fedpkg new-sources
 Source30: download-jit-stencils-from-koji.sh
 # This %%if-hack makes it easier to do step 1. from the above.
-# Use `fedpkg sources --force` to get the conditionally defined sources from the lookaside cache.
 # Macro %%exists is not present in the rpm version available in EL9,
 # hence to prevent parsing errors, we add additional check for its existence.
 %if (%{with jit} && %{without jit_build_stencils}) || 0%{?exists:%{exists:%{_sourcedir}/Python-%{upstream_version}-x86_64-optimized-jit_stencils.h}}
@@ -1132,8 +1145,10 @@ EOF
 %if %{with rpmwheels}
   --with-wheel-pkg-dir=%{python_wheel_dir} \
 %endif
+%if %{without bootstrap}
 %ifarch %{valgrind_arches}
   --with-valgrind \
+%endif
 %endif
   $ExtraConfigArgs \
   %{nil}
@@ -1316,17 +1331,20 @@ install -d -m 0755 %{buildroot}%{_prefix}/lib/python%{pybasever}%{ABIFLAGS_freet
 %endif
 
 %if %{with main_python}
-# add idle3 to menu
 install -D -m 0644 Lib/idlelib/Icons/idle_16.png %{buildroot}%{_datadir}/icons/hicolor/16x16/apps/idle3.png
 install -D -m 0644 Lib/idlelib/Icons/idle_32.png %{buildroot}%{_datadir}/icons/hicolor/32x32/apps/idle3.png
 install -D -m 0644 Lib/idlelib/Icons/idle_48.png %{buildroot}%{_datadir}/icons/hicolor/48x48/apps/idle3.png
 install -D -m 0644 Lib/idlelib/Icons/idle_256.png %{buildroot}%{_datadir}/icons/hicolor/256x256/apps/idle3.png
-desktop-file-install --dir=%{buildroot}%{_datadir}/applications %{SOURCE10}
-
-# Install and validate appdata file
 mkdir -p %{buildroot}%{_metainfodir}
 cp -a %{SOURCE11} %{buildroot}%{_metainfodir}
+%if %{without bootstrap}
+desktop-file-install --dir=%{buildroot}%{_datadir}/applications %{SOURCE10}
+%if %{with appstream_glib}
 appstream-util validate-relax --nonet %{buildroot}%{_metainfodir}/idle3.appdata.xml
+%endif
+%else
+install -D -m 0644 %{SOURCE10} %{buildroot}%{_datadir}/applications/idle3.desktop
+%endif
 %endif
 
 # Make sure sysconfig looks at the right pyconfig-32.h/pyconfig-64.h file instead of pyconfig.h
@@ -2032,3 +2050,6 @@ CheckPython freethreading
 # Finally, the changelog:
 # ======================================================
 
+
+%changelog
+%autochangelog

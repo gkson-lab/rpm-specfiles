@@ -22,6 +22,7 @@
 # Disable LTO until upstream fixes GDB's ODR woes.
 %define _lto_cflags %{nil}
 
+
 %{?scl:%scl_package gdb}
 %{!?scl:
  %global pkg_name %{name}
@@ -45,13 +46,16 @@ Version:        18.1
 
 # The release always contains a leading reserved number, start it at 1.
 # `upstream' is not a part of `name' to stay fully rpm dependencies compatible for the testing.
-Release:        1%{?dist}
+Release:        2%{?dist}
 
 License: GPL-3.0-or-later AND BSD-3-Clause AND FSFAP AND LGPL-2.1-or-later AND GPL-2.0-or-later AND LGPL-2.0-or-later AND LicenseRef-Oreon-Public-Domain AND GFDL-1.3-or-later AND LGPL-2.0-or-later WITH GCC-exception-2.0 AND GPL-3.0-or-later WITH GCC-exception-3.1 AND GPL-2.0-or-later WITH GNU-compiler-exception AND MIT
 # Do not provide URL for snapshots as the file lasts there only for 2 days.
 # ftp://sourceware.org/pub/gdb/releases/FIXME{tarname}.tar.xz
 Source0:        https://sourceware.org/pub/gdb/releases/gdb-%{version}.tar.xz
 Patch0:         gdb-aarch64-opc-null-comment.patch
+Patch1:         gdb-add-index-prefer-minimal.patch
+Patch2:         gdb-function-view-mismatched-tags.patch
+Patch3:         gdb-fileio-switch-enum.patch
 URL: https://gnu.org/software/gdb/
 
 # For our convenience
@@ -146,7 +150,7 @@ BuildRequires: zlib-devel%{buildisa} libselinux-devel%{buildisa}
 BuildRequires: python3-devel%{buildisa}
 %endif
 BuildRequires: texinfo-tex
-BuildRequires: texlive-collection-latexrecommended
+BuildRequires: texlive-base
 # Permit rebuilding *.[0-9] files even if they are distributed in gdb-*.tar:
 BuildRequires: /usr/bin/pod2man
 %if %{defined use_guile}
@@ -366,11 +370,7 @@ COMMON_GDB_CONFIGURE_FLAGS="\
 ,-Wno-format-overflow\
 %endif
         --enable-build-with-cxx                                 \
-%ifnarch %{ix86} alpha ppc s390 s390x x86_64 ppc64 ppc64le %{arm} aarch64 riscv64
         --disable-werror                                        \
-%else
-        --enable-werror                                         \
-%endif
         --with-separate-debug-dir=/usr/lib/debug                \
         --disable-sim                                           \
         --disable-rpath                                         \
@@ -863,3 +863,6 @@ fi
 %endif
 # endif scl
 
+
+%changelog
+%autochangelog

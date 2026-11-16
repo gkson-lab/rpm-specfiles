@@ -1,7 +1,7 @@
 # Copyright (C) 2026 Oreon HQ
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-%global source0_hash 0605f8d8a2f4668cb16e279ebcad8002cc83f44610633157e9c4b8fc183a479b
+%global source0_hash ebbddde55c6fb9eb141fca03d0f3c251282ded60351f43933d83e2e2e0bff6de
 
 %{!?oreon_bootstrap:%global oreon_bootstrap %{nil}}
 %bcond bootstrap 0
@@ -12,7 +12,7 @@
 %global somajor 0
 
 Name:           libeconf
-Version:        0.7.9
+Version:        0.8.7
 Release:        1%{?dist}
 Summary:        Enhanced config file parser library
 
@@ -20,12 +20,7 @@ License:        MIT
 URL:            https://github.com/openSUSE/libeconf
 Source0:        https://github.com/openSUSE/libeconf/archive/refs/tags/v%{version}/libeconf-%{version}.tar.gz
 
-### Patches ###
-# This should be a temporary workaround. I don't have enough time to check what's happening, but since we aren't shipping the html documentation it's fine to stop installing it
-Patch0101:        0001-cmake-no-install-html.patch
-# Intermittent failure of a test in aarch64, thus temporarily disabling the failing test suite
-Patch0102:        0002-disable-test.patch
-
+Patch0101:      0001-cmake-no-install-html.patch
 
 BuildRequires:  cmake >= 3.12
 BuildRequires:  gcc
@@ -92,3 +87,6 @@ configuration files from applications that use %{name}.
 %{_bindir}/econftool
 %{_mandir}/man8/econftool.8*
 
+
+%changelog
+%autochangelog

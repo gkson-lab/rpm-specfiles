@@ -17,7 +17,13 @@
 
 Name: gcc
 Version: 16.2.0
-Release: 7%{?dist}
+Release: 13%{?dist}
+%global gcc_major %(echo %{version} | cut -d. -f1)
+%ifarch aarch64
+%global gcc_target_platform aarch64-unknown-linux-gnu
+%else
+%global gcc_target_platform %{_target_cpu}-pc-linux-gnu
+%endif
 Summary: GNU Compiler Collection
 License: GPL-3.0-or-later AND (GPL-3.0-or-later WITH GCC-exception-3.1)
 URL: https://gcc.gnu.org
@@ -41,6 +47,8 @@ Requires: binutils
 Requires: cpp%{?_isa} = %{version}-%{release}
 Requires: glibc-devel
 Requires: libgcc%{?_isa} = %{version}-%{release}
+Provides: gcc(major) = %{gcc_major}
+Provides: gcc(crt-triple)
 %if %{without bootstrap} && !0%{?bootstrap}
 BuildRequires: texinfo
 BuildRequires: bison
@@ -77,6 +85,7 @@ The GNU C preprocessor. It is used by the C compiler to transform programs befor
 Summary: GNU C++ compiler
 Requires: gcc%{?_isa} = %{version}-%{release}
 Requires: libstdc++-devel%{?_isa} = %{version}-%{release}
+Provides: g++%{?_isa} = %{version}-%{release}
 %description -n gcc-c++
 C++ support for the GNU Compiler Collection.
 
@@ -254,6 +263,12 @@ Requires: libquadmath-devel%{?_isa} = %{version}-%{release}
 Static GCC __float128 math library.
 %endif
 
+%package -n gcc-plugin-annobin
+Summary: Annobin plugin built by this GCC
+Requires: gcc%{?_isa} = %{version}-%{release}
+%description -n gcc-plugin-annobin
+Annobin plugin built by the same GCC it is installed with.
+
 %if %{without bootstrap} && !0%{?bootstrap}
 %package -n gcc-objc
 Summary: GNU Objective-C compiler
@@ -321,12 +336,6 @@ Requires: gcc%{?_isa} = %{version}-%{release}
 Requires: libgo%{?_isa} = %{version}-%{release}
 %description -n gcc-go
 Go support for the GNU Compiler Collection.
-
-%package -n gcc-plugin-annobin
-Summary: Annobin plugin built by this GCC
-Requires: gcc%{?_isa} = %{version}-%{release}
-%description -n gcc-plugin-annobin
-Annobin plugin built by the same GCC it is installed with.
 
 %package -n libstdc++-docs
 Summary: GNU Standard C++ Library documentation
@@ -545,7 +554,7 @@ export FCFLAGS_FOR_TARGET="-O2 -g"
 jobs=%{?_smp_build_ncpus}
 if [ -z "$jobs" ]; then jobs=1; fi
 src=%{_builddir}/gcc-%{version}
-target=$("$src/config.guess")
+target=%{gcc_target_platform}
 
 step() {
   name=$1
@@ -567,6 +576,9 @@ common() {
     --libexecdir=%{_libexecdir} \
     --mandir=%{_mandir} \
     --infodir=%{_infodir} \
+    --build=%{gcc_target_platform} \
+    --host=%{gcc_target_platform} \
+    --target=%{gcc_target_platform} \
     --enable-threads=posix \
     --enable-checking=release \
     --with-system-zlib \
@@ -720,6 +732,47 @@ find %{buildroot} -name '*.la' -delete
 rm -f %{buildroot}%{_infodir}/dir
 rm -rf %{buildroot}%{_libdir}/gcc/*/*/install-tools
 rm -rf %{buildroot}%{_libexecdir}/gcc/*/*/install-tools
+plug=$(echo %{buildroot}%{_libdir}/gcc/*/*/plugin)
+test -d "$plug"
+b=%{_builddir}/gcc-build
+src=%{_builddir}/gcc-%{version}
+target=%{gcc_target_platform}
+test -f "$b/gcc/plugin-version.h"
+flags=$b/$target/libstdc++-v3/scripts/testsuite_flags
+test -x "$flags"
+inc="-I$b/gcc -I$src/gcc -I$src/include -I$src/libcpp/include"
+libs=
+for d in \
+  "$b/prev-$target/libstdc++-v3/src/.libs" \
+  "$b/$target/libstdc++-v3/src/.libs" \
+  "$b/$target/libgcc/.libs" \
+  "$b/gcc"
+do
+  [ -d "$d" ] || continue
+  libs=${libs:+$libs:}$d
+done
+unset CFLAGS CXXFLAGS FFLAGS FCFLAGS OBJCFLAGS LDFLAGS
+export CFLAGS="-O2 -g $inc"
+export CXXFLAGS="-O2 -g $inc $($flags --build-includes)"
+export LDFLAGS="-L$b/$target/libstdc++-v3/src/.libs -L$b/$target/libstdc++-v3/libsupc++/.libs"
+export LD_LIBRARY_PATH="$libs"
+mkdir -p %{_builddir}/annobin-build
+cd %{_builddir}/annobin-build
+CC="$b/gcc/xgcc -B$b/gcc/ -B$b/$target/libgcc/" \
+CXX="$b/gcc/xg++ -B$b/gcc/ -B$b/$target/libgcc/ -B$b/$target/libstdc++-v3/src/.libs -B$b/$target/libstdc++-v3/libsupc++/.libs -L$b/$target/libstdc++-v3/src/.libs -L$b/$target/libstdc++-v3/libsupc++/.libs" \
+%{_builddir}/annobin-%{annobin_ver}/configure \
+  --prefix=%{_prefix} \
+  --with-gcc-plugin-dir="${plug#%{buildroot}}" \
+  --with-clang-plugin=no \
+  --with-llvm-plugin=no \
+  --without-annocheck \
+  --without-docs \
+  --without-tests \
+  --without-debuginfod \
+  --disable-rpath
+make -s -j%{?_smp_build_ncpus}
+make -s install DESTDIR=%{buildroot}
+find %{buildroot} -name '*.la' -delete
 %else
 step() {
   name=$1
@@ -736,7 +789,7 @@ step() {
 cd %{_builddir}/gcc-build
 step host-install make -s install DESTDIR=%{buildroot} LDFLAGS_FOR_TARGET="-Wl,-z,relro,-z,now"
 %ifarch x86_64
-target=$(%{_builddir}/gcc-%{version}/config.guess)
+target=%{gcc_target_platform}
 off=%{_builddir}/offload-root%{_prefix}
 dest=%{buildroot}%{_prefix}
 mkdir -p "$dest/bin"
@@ -800,7 +853,7 @@ if [ -f %{_builddir}/gcc-jit/gcc/doc/libgccjit.info ]; then
   cp -a %{_builddir}/gcc-jit/gcc/doc/libgccjit.info %{buildroot}%{_infodir}/
 fi
 rm -rf %{_builddir}/gcc-jit
-target=$(%{_builddir}/gcc-%{version}/config.guess)
+target=%{gcc_target_platform}
 doc=%{_builddir}/gcc-build/$target/libstdc++-v3/doc/doxygen/html
 if ! find "$doc" -type f | grep -q .; then
   echo "missing libstdc++ docs $doc"
@@ -852,6 +905,25 @@ rm -f %{buildroot}%{_infodir}/dir
 rm -rf %{buildroot}%{_libdir}/gcc/*/*/install-tools
 rm -rf %{buildroot}%{_libexecdir}/gcc/*/*/install-tools
 %endif
+
+target=%{gcc_target_platform}
+for dir in %{buildroot}%{_libdir}/gcc %{buildroot}%{_libexecdir}/gcc; do
+  if [ -d "$dir/$target" ]; then
+    for alias in %{_target_cpu}-redhat-linux %{_target_cpu}-redhat-linux-gnu %{_target_cpu}-oreon-linux-gnu %{_target_cpu}-oreon-linux; do
+      if [ "$alias" != "$target" ] && [ ! -e "$dir/$alias" ]; then
+        ln -sfn "$target" "$dir/$alias"
+      fi
+    done
+  fi
+done
+cxxinc=%{buildroot}%{_includedir}/c++/%{gcc_major}
+if [ -d "$cxxinc/$target" ]; then
+  for alias in %{_target_cpu}-redhat-linux %{_target_cpu}-redhat-linux-gnu %{_target_cpu}-oreon-linux-gnu %{_target_cpu}-oreon-linux; do
+    if [ "$alias" != "$target" ] && [ ! -e "$cxxinc/$alias" ]; then
+      ln -sfn "$target" "$cxxinc/$alias"
+    fi
+  done
+fi
 
 out=%{_builddir}/gcc-split
 rm -rf "$out"
@@ -1015,7 +1087,7 @@ set +x
 find "$ROOT" -print | sort | while read p; do
   rel=${p#"$ROOT"}
   [ -n "$rel" ] || continue
-  if [ -d "$p" ]; then
+  if [ -d "$p" ] && [ ! -L "$p" ]; then
     continue
   fi
   entry=$rel
@@ -1053,12 +1125,12 @@ find "$ROOT" -type d | sort | while read p; do
   fi
 done
 
-req="cpp gcc gcc-c++ gcc-gdb-plugin gcc-plugin-devel libgcc libstdc++ libstdc++-devel libstdc++-static libgomp libatomic libitm libitm-devel libitm-static libasan libasan-static libhwasan libhwasan-static libtsan libtsan-static liblsan liblsan-static libubsan libubsan-static"
+req="cpp gcc gcc-c++ gcc-gdb-plugin gcc-plugin-devel gcc-plugin-annobin libgcc libstdc++ libstdc++-devel libstdc++-static libgomp libatomic libitm libitm-devel libitm-static libasan libasan-static libhwasan libhwasan-static libtsan libtsan-static liblsan liblsan-static libubsan libubsan-static"
 %ifarch x86_64
 req="$req libquadmath libquadmath-devel libquadmath-static"
 %endif
 %if %{without bootstrap} && !0%{?bootstrap}
-req="$req gcc-objc gcc-objc++ gcc-gfortran gcc-gdc gcc-gm2 gcc-gcobol gcc-algol68 gcc-gnat gcc-go gcc-plugin-annobin libstdc++-docs libgfortran libgfortran-static libgphobos libgphobos-static libgm2 libgm2-static libgcobol libgcobol-static libga68 libga68-static libgnat libgnat-devel libgnat-static libgo libgo-devel libgo-static libobjc libgccjit libgccjit-devel libgdiagnostics libgdiagnostics-devel"
+req="$req gcc-objc gcc-objc++ gcc-gfortran gcc-gdc gcc-gm2 gcc-gcobol gcc-algol68 gcc-gnat gcc-go libstdc++-docs libgfortran libgfortran-static libgphobos libgphobos-static libgm2 libgm2-static libgcobol libgcobol-static libga68 libga68-static libgnat libgnat-devel libgnat-static libgo libgo-devel libgo-static libobjc libgccjit libgccjit-devel libgdiagnostics libgdiagnostics-devel"
 %ifarch x86_64
 req="$req libgomp-offload-nvptx libgomp-offload-amdgcn gcc-offload-nvptx gcc-offload-amdgcn"
 %endif
@@ -1105,6 +1177,8 @@ done
 %files -n gcc-gdb-plugin -f %{_builddir}/gcc-split/gcc-gdb-plugin.files
 %license COPYING3
 %files -n gcc-plugin-devel -f %{_builddir}/gcc-split/gcc-plugin-devel.files
+%license COPYING3
+%files -n gcc-plugin-annobin -f %{_builddir}/gcc-split/gcc-plugin-annobin.files
 %license COPYING3
 %files -n libgcc -f %{_builddir}/gcc-split/libgcc.files
 %license COPYING.RUNTIME COPYING3.LIB
@@ -1171,8 +1245,6 @@ done
 %license COPYING3
 %files -n gcc-go -f %{_builddir}/gcc-split/gcc-go.files
 %license COPYING3
-%files -n gcc-plugin-annobin -f %{_builddir}/gcc-split/gcc-plugin-annobin.files
-%license COPYING3
 %files -n libstdc++-docs -f %{_builddir}/gcc-split/libstdc++-docs.files
 %files -n libgfortran -f %{_builddir}/gcc-split/libgfortran.files
 %license COPYING.RUNTIME COPYING3.LIB
@@ -1227,3 +1299,6 @@ done
 %license COPYING3
 %endif
 %endif
+
+%changelog
+%autochangelog

@@ -26,6 +26,7 @@ cmocka is a unit testing framework for C with support for mock objects.
 %package devel
 Summary: Development files for cmocka
 Requires: %{name}%{?_isa} = %{version}-%{release}
+Provides: libcmocka-devel%{?_isa} = %{version}-%{release}
 Provides: pkgconfig(cmocka) = %{version}
 
 %description devel
@@ -51,3 +52,6 @@ rm -f %{buildroot}%{_libdir}/libcmocka.a
 %license COPYING
 
 %files devel -f %{_builddir}/%{name}-devel.files
+
+%changelog
+%autochangelog

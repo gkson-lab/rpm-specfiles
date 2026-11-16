@@ -41,6 +41,24 @@
 %_debuginfo_subpackages 1
 %_preserve_static_debuginfo 1
 
+%__debug_install_post \
+    export GDB="${GDB:-/usr/bin/gdb.minimal}"; \
+    %{__find_debuginfo} \\\
+    %{?_smp_build_ncpus:-j%{_smp_build_ncpus}} \\\
+    %{?_missing_build_ids_terminate_build:--strict-build-id} \\\
+    %{?_no_recompute_build_ids:-n} \\\
+    %{?_include_minidebuginfo:-m} \\\
+    %{?_include_gdb_index:-i} \\\
+    %{?_unique_build_ids:--build-id-seed "%{VERSION}-%{RELEASE}"} \\\
+    %{?_unique_debug_names:--unique-debug-suffix "-%{VERSION}-%{RELEASE}.%{_arch}"} \\\
+    %{?_unique_debug_srcs:--unique-debug-src-base "%{name}-%{VERSION}-%{RELEASE}.%{_arch}"} \\\
+    %{?_find_debuginfo_dwz_opts} \\\
+    %{?_find_debuginfo_opts} \\\
+    %{?_find_debuginfo_vendor_opts} \\\
+    %{?_debugsource_packages:-S debugsourcefiles.list} \\\
+    "%{builddir}/%{?buildsubdir}"\
+%{nil}
+
 # GCC toolchain
 %__cc_gcc gcc
 %__cxx_gcc g++
@@ -82,10 +100,7 @@
 # Vala compiler flags. This is used to set VALAFLAGS.
 %build_valaflags -g
 
-# When clang is used as a linker driver, it does not auto-detect the LTO
-# bytecode and neither does bfd, so we need to explicitly pass the -flto
-# flag when linking.
-%_clang_extra_ldflags %{?_lto_cflags}
+%_clang_extra_ldflags -fuse-ld=lld %{?_lto_cflags}
 
 # Link editor flags.  This is usually called LDFLAGS in makefiles.
 # (Some makefiles use LFLAGS instead.)  The default value assumes that
